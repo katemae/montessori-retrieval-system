@@ -1,6 +1,6 @@
 import pandas as pd
 
-def load_corpus(path="text-data/all_excerpts.csv"):
+def load_meta(path="metadata/all_excerpts.csv"):
     # simplify column names
     COL_MAP = {
         "Type of Evidence (Example, Material, Study)": "EvidenceType",
