@@ -12,6 +12,18 @@ As a solo project, I will be responsible for all aspects of implementation, test
 
 ---
 
+# Methodology
+
+The dataset consists of two parts: raw `.txt` files of Montessori texts, research papers, studies, and more diving into scienfitic evidences, school anecdotes, Montessori materials, and examples of the benefits and differences between Montessori and Traditional education. Alongside this is a `.csv` file of `metadata`, where data analysts at [Y Montessori](https://ymontessori.com/data) have broken up the book _Montessori: The Science Behind the Genius_ into different educational categories and domains for comparison. 
+
+The system first segments the raw educational `.txt` files into paragraph-level passages. These passages, along with the excerpts from the metadata file, are then vectorized using TF-IDF to construct a shared feature space. User queries are processed using the same preprocessing and vectorization pipeline and are ranked against the corpus using cosine similarity.
+
+In addition to basic retrieval, the system performs lightweight text mining by inferring structured metadata directly from text. This includes identifying the instructional approach (Montessori or Traditional), evidence type (Study, Material, or Example), and relevant educational domains (e.g., Cognitive, Behavioral, Academic, Social, Environment). These inferred attributes enable optional, query-driven filtering to refine retrieval results.
+
+Evaluation is performed using Precision@5 on a small set of manually labeled queries. Recall@5 was initially computed but resulted in a value of 1.00 due to relevance judgments being collected only for the top retrieved results. As a result, Precision@5 is reported as the primary evaluation metric.
+
+---
+
 # Using the Search Engine
 
 **(1) Create the conda environment**
