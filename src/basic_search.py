@@ -11,6 +11,13 @@ CORPUS_FILE = "models/corpus_processed.pkl"
 
 
 class BasicMontessoriSearchEngine:
+    """
+    BasicMontessoriSearchEngine:
+    Class to perform a basic query returning top-k ranked documents
+    based on fitted TF-IDF.
+
+    No filtering for certain vocabulary (as per the metadata) is applied.
+    """
     def __init__(self):
         print("Loading TF-IDF index...")
         self.vectorizer = pickle.load(open(VECTORIZER_FILE, "rb"))
@@ -40,6 +47,7 @@ class BasicMontessoriSearchEngine:
                 "score": float(scores[idx]),
                 "doc_id": row["doc_id"],
                 "text": row["text"],
+                "raw_text": row["raw_text"],
                 "approach": row["approach"],
                 "domain": row["domain"],
                 "evidence_type": row["evidence_type"],
@@ -65,9 +73,11 @@ if __name__ == "__main__":
     for i, r in enumerate(results, 1):
         print(f"\n--- Result {i} ---")
         print(f"Score: {r['score']:.4f}")
-        print(f"Source: {r['source_title']} ({r['source_type']})")
+        print(f"Source: {r['source_title']}")
         print(f"Evidence Type: {r['evidence_type']}")
-        print(f"Approach: {r['approach']}")
-        print(f"Domain: {r['domain']}")
-        print(f"Text: {r['text'][:300]}...")
+        if r["approach"] is not None and str(r["approach"]).lower() != "nan":
+            print(f"Approach: {r['approach']}")
+        if r["domain"] is not None and str(r["domain"]).lower() != "nan":
+            print(f"Domain: {r['domain']}")
+        print(f"Text: {r['raw_text'][:min(500, len(r['raw_text']))]}...")
     print("\n=== END SEARCH ===\n")

@@ -12,15 +12,18 @@ OUTPUT_FILE = "data/full_corpus.csv"
 # ----------------------------------------------
 
 MONTESSORI_MATERIALS = [
-    "pink tower", "metal insets", "stamp game", "moveable alphabet",
-    "spindle box", "binomial cube", "trinomial cube", "knobbed cylinders",
-    "golden beads", "sandpaper letters", "red rods", "long rods",
-    "brown stair", "color tablets", "montessori material", "montessori materials"
+    "pink tower", "metal inset", "stamp game", "moveable alphabet",
+    "spindle box", "binomial cube", "trinomial cube", "knobbed cylinder",
+    "golden bead", "sandpaper letter", "red rod", "long rod",
+    "brown stair", "color tablet", "sound cylinder", "rough and smooth board",
+    "smooth board", "rough board", "wooden cylinder", "geometry cabinet",
+    "glass bead", "fraction inset", "inset", "botany cabinet",
+    "divergent and convergent lines"
 ]
 
 def contains_material(text):
     """
-    Check if a passage contains a Montessori material name.
+    checks if a passage contains a Montessori material.
     """
     text = text.lower()
     return any(mat in text for mat in MONTESSORI_MATERIALS)
@@ -28,16 +31,68 @@ def contains_material(text):
 
 def detect_citation(text):
     """
-    Detect study-like evidence using citation patterns.
+    detects citations to categorize studies.
+
+    eg:
+    (Author, 1999)
+    (Author & Author, 1972)
+    (Author et al., 1996)
+    (Author, 1948/1976)
+    (Author, 1969, p. 2)
+    (Author, 1980; Other & Author, 1992)
     """
-    citation_patterns = [
-        r"\([A-Za-z]+\,\s*\d{4}\)",   # (Name, 2001)
-        r"\(\d{4}\)",                 # (2001)
-        r"\[[0-9]+\]",                # [12]
-        r"\(see.*?\)",                # (see Chapter 2)
-        r"\(p{1,2}\.\s*\d+\)"         # (p. 45) or (pp. 21)
-    ]
-    return any(re.search(p, text) for p in citation_patterns)
+
+    citation_pattern = r"""
+    \(                                  # opening parenthesis
+    [^()]*?                             # any text, notably author name or text/study name
+    \b\d{4}(?:/\d{4})?\b                # year or year/year
+    [^()]*?                             # any text to capture page numbers or other authors
+    \)                                  # closing parenthesis
+    """
+
+    return re.search(citation_pattern, text, re.VERBOSE) is not None
+
+def build_indexed_text(row):
+    """
+    combine metadata + evidence into a single text.
+    """
+    parts = []
+
+    for label, col in [
+        ("Comparison", "Comparison"),
+        ("Category", "Category"),
+        ("Concept", "Title"),
+        ("Approach", "Approach"),
+        ("Domain", "Domain"),
+        ("Evidence Type", "Type of Evidence (Example, Material, Study)")
+    ]:
+        if col in row and pd.notna(row[col]):
+            parts.append(f"{label}: {row[col]}")
+
+    parts.append(f"Excerpt: {row['Evidence']}")
+    return "\n".join(parts)
+
+def build_passage_indexed_text(row):
+    """
+    combine newly found metadata + evidence into a single text.
+    """
+    parts = []
+
+    if pd.notna(row.get("approach")):
+        parts.append(f"Approach: {row['approach']}")
+
+    if pd.notna(row.get("domain")):
+        parts.append(f"Domain: {row['domain']}")
+
+    if pd.notna(row.get("evidence_type")):
+        parts.append(f"Evidence Type: {row['evidence_type']}")
+
+    if pd.notna(row.get("source_title")):
+        parts.append(f"Source: {row['source_title']}")
+
+    parts.append(f"Excerpt: {row['raw_text']}")
+
+    return "\n".join(parts)
 
 
 # ----------------------------------------------
@@ -47,8 +102,13 @@ def detect_citation(text):
 def load_excerpts():
     df = pd.read_csv(EXCERPT_FILE)
 
+    # separate the raw text/evidence for displaying
+    df["raw_text"] = df["Evidence"]
+
+    # text enriched w/ metadata
+    df["text"] = df.apply(build_indexed_text, axis=1)
+
     df = df.rename(columns={
-        "Evidence": "text",
         "Approach": "approach",
         "Domain": "domain",
         "Type of Evidence (Example, Material, Study)": "evidence_type",
@@ -58,12 +118,13 @@ def load_excerpts():
     df["source_type"] = "excerpt"
     df["source_file"] = "excerpt_dataset"
     df["paragraph_index"] = None
-    df["doc_id"] = ["excerpt_" + str(i) for i in range(len(df))]
+    df["doc_id"] = [f"excerpt_{i}" for i in range(len(df))]
 
     # only select columns
     return df[[
         "doc_id",
         "text",
+        "raw_text",    # for display only
         "approach",
         "domain",
         "evidence_type",
@@ -72,6 +133,7 @@ def load_excerpts():
         "source_file",
         "paragraph_index"
     ]]
+
 
 
 # ----------------------------------------------
@@ -125,9 +187,17 @@ def load_passages():
     df["domain"] = domains
     df["source_title"] = source_titles
 
+    # separate the raw para/evidence for displaying
+    df["raw_text"] = df["text"]
+
+    # enriched text, if applicable
+    df["text"] = df.apply(build_passage_indexed_text, axis=1)
+
+
     return df[[
         "doc_id",
         "text",
+        "raw_text",    # for display only
         "approach",
         "domain",
         "evidence_type",
