@@ -64,7 +64,7 @@ python src/filter_search.py
 
 From here:
 
-a. Enter a Montessori-related query when prompted
+a. Enter a Montessori-related query and number of documents (optional) when prompted
 
 b. Accept or decline recommended filters
 
