@@ -9,3 +9,69 @@ This system will utilize a (proprietary) dataset of Montessori and Traditional e
 Effectiveness will be demonstrated through qualitative evaluation of example queries and top-ranked results. If time permits, I plan to compute simple precision and recall metrics to further validate performance.
 
 As a solo project, I will be responsible for all aspects of implementation, testing, and documentation of the system. This tool addresses that challenge by centralizing key evidence into one searchable system and presenting it in a digestible format. It aims to help parents, educators, and researchers quickly locate and compare findings that support different educational methodologies, reducing the need to manually read through all the complex research literature to decide what's best for their child(ren).
+
+---
+
+# Using the Search Engine
+
+**(1) Create the conda environment**
+
+```
+conda env create -f requirements.yml
+```
+
+
+
+**(2) Activate the environment**
+
+```
+conda activate montessori-retrieval
+```
+If you used a custom name, replace `montessori-retrieval` accordingly.
+
+
+
+**(3) Build the corpus and TF-IDF index (optional)**
+
+The `models/` directory is already populated.
+Additionally, because the raw text files are proprietary and therefore hidden,
+you must skip the first two steps:
+
+a. First two steps (must be skipped unless you have access to raw data):
+```
+python src/build_corpus.py 
+python src/merge_corpora.py
+```
+
+b. Runnable step, optional:
+```
+python src/idx_tfidf.py
+```
+
+This will generate:
+- `data/full_corpus.csv`
+- `models/tfidf_vectorizer.pkl`
+- `models/tfidf_matrix.pkl`
+- `models/corpus_processed.pkl`
+
+
+
+**(4) Run the interactive search system/engine**
+
+```
+python src/filter_search.py
+```
+
+From here:
+
+a. Enter a Montessori-related query when prompted
+
+b. Accept or decline recommended filters
+
+c. Type q or quit to exit, or enter another query to continue.
+
+**(5) Optionally, run an evaluation of `Precision@5` on 5 select queries.**
+
+```
+python eval/precision_at_5.py
+```

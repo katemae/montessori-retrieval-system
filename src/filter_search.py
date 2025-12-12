@@ -1,8 +1,25 @@
+"""
+My Final Montessori Evidence Retrieval System (CS410)
+
+Implements a TF-IDF-based information retrieval system over
+Montessori and traditional education texts, with optional
+query-inferred metadata filters (approach, domain, evidence type).
+
+Usage:
+    python src/filter_search.py
+
+    From here, proceed with the messages on the screen to:
+    1) Enter a query, or exit with 'q' or 'quit'
+    2) Filter the documents, if applicable
+"""
+
+
 import pickle
 import numpy as np
 import sys
 from sklearn.metrics.pairwise import cosine_similarity
 from idx_tfidf import preprocess_text
+import time
 
 
 VECTORIZER_FILE = "models/tfidf_vectorizer.pkl"
@@ -224,6 +241,15 @@ if __name__ == "__main__":
         if len(query) < 1:
             continue
         
+        k_docs = input("How many documents would you like? [default k=5]:").strip()
+        if k_docs == "" or k_docs.lower() == "default":
+            k = 5
+        elif k_docs.isdigit() and int(k_docs) > 0:
+            k = int(k_docs)
+        else:
+            print("\tInvalid interger, using default (5).")
+            k = 5
+        
         results = engine.search(query, k=5)
         print(f"\n=== QUERY: {query} ===")
         # print("\nSearching for relevant texts...")
@@ -238,6 +264,7 @@ if __name__ == "__main__":
             if r["domain"] is not None and str(r["domain"]).lower() != "nan":
                 print(f"Domain: {r['domain']}")
             print(f"Text: {r['raw_text'][:min(500, len(r['text']))]}...")
+            time.sleep(1)
         print(f"\n=== END SEARCH ON: {query} ===\n")
 
     print("\033c", end="")
